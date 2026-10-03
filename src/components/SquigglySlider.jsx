@@ -2,54 +2,54 @@
 import { useState } from 'react';
 
 function getCoords(x, height, period, yOffset) {
-    let y = yOffset + (height/2) * Math.sin(x / period);
+    let y = yOffset + (height/3) * Math.sin(x / period);
     return [x,y];
 }
-function getPoints(start, end, y, height, period) {
+function getPoints(start, end, y, height, period, sample_length) {
     let points = [];
-    for (let i = start; i < end; i += period * Math.PI / 2) {
+    for (let i = start; i < end; i += sample_length+0) {
         points.push(getCoords(i, height, period, y));
     }
     return points;
 }
+    console.log("getmapped")
 function getMappedString(points, height) {
-    points = points.flat();
-    points = points.map((point, index) => {
-        let a = index + 1;
-        if (!(a % 4)) {
-            if (!(a % 8))
-                return point - height;
-            else return point + height;
-        }
-        else return point;
-    });
     let str = ["M"];
-    str.push(points[0].toString());
-    str.push(points[1].toString());
-    for (let i = 2; i < points.length; i++) {
-        if (!((i - 2) % 4))
-            str.push("Q");
-        let c = points[(i)];
-        str.push(c.toString());
+    for (let i = 0; i < points.length; i++) {
+        if (!(i+1)%3) str.push("L");
+        str.push(points[i][0].toString());
+        str.push(points[i][1].toString());
     }
-    str = str.join(" ");
-    return str;
+    return str.join(" ");
 }
 
-export default function SquigglySlider({height, width, period, lineWeight, dotSize}) {
+export default function SquigglySlider({height, width, period, lineWeight, dotSize, sample_length}) {
+    sample_length = Number(sample_length);
     let off = height / 2;
-    let points = getPoints(0, width, off, height, period);
+    let points = getPoints(0, width, off, height, period, sample_length);
     let squiggle = getMappedString(points, off);
     let [slider, setSlider] = useState(getCoords(0, height, period, off+dotSize/2));
     let [draggable, setDraggable] = useState(false);
     return (<>
-        <svg height={height+dotSize*2} width={width} viewBox = {`0 0 {width} {height}`}
+        <svg height={height} width={width} viewBox = {`0 0 {width} {height}`}
                     onPointerDown = {(event)=>{setDraggable(true);}}
                     onPointerUp = {(event)=>{setDraggable(false)}}
                     onMouseMove = {(event)=>{
-                        if (draggable) setSlider(getCoords(event.clientX, height, period, off+dotSize/2));}
+                        if (draggable) setSlider(getCoords(event.clientX, height, period, off));}
                     }>
-            <path d={squiggle} style={{ fill: "none", stroke: "black" , strokeWidth: lineWeight}} />
+            <path
+                d={squiggle}
+                fill="none"
+                stroke="black"
+                strokeWidth={lineWeight}
+                vectorEffect="non-scaling-stroke"
+                 shapeRendering="crispEdges"
+            />
+            
+
+            {/* {points.map((point, index)=>(
+                <circle cx = {point[0]} cy = {point[1]} r={6} key={index}></circle>
+            ))} */}
             <circle cx={slider[0]} cy={slider[1]} r={dotSize} fill="black" />
         </svg>
     </>);
